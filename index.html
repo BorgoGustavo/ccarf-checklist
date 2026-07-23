@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCAR-F · Checklist de Estudo</title>
+<style>
+  :root{
+    --bg:#191613;
+    --bg-raise:#201c18;
+    --bg-panel:#241f1a;
+    --ink:#e6dfd0;
+    --ink-dim:#a89d8a;
+    --ink-faint:#6f6657;
+    --line:#2e2822;
+    --accent:#c9784f;
+    --accent-soft:rgba(201,120,79,.13);
+    --done:#8faf8b;
+    --done-soft:rgba(143,175,139,.12);
+    --err:#c96a5a;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--serif);font-size:17px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="240" height="240" filter="url(%23n)" opacity="0.55"/></svg>');
+    opacity:.05;
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 90% at 50% 0%,transparent 55%,rgba(0,0,0,.35));
+  }
+  main{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:72px 28px 120px}
+
+  /* ---------- toolbar ---------- */
+  .toolbar{
+    position:fixed;top:16px;right:16px;z-index:10;
+    display:flex;align-items:center;gap:8px;
+    background:rgba(25,22,19,.85);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  }
+  .toolbar button{
+    font-family:var(--serif);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);background:none;border:1px solid var(--line);border-radius:5px;
+    padding:5px 10px;cursor:pointer;transition:color .15s,border-color .15s,background .15s;
+  }
+  .toolbar button:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .toolbar button:focus-visible,.tick:focus-visible,.panel button:focus-visible,summary:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+  .toolbar button.active{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+  .sync-state{display:flex;align-items:center;gap:6px;padding-right:4px;border-right:1px solid var(--line);margin-right:2px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);flex:none}
+  .dot.ok{background:var(--done)}
+  .dot.err{background:var(--err)}
+  .dot.busy{background:var(--accent)}
+  #syncLabel{font-size:11px;letter-spacing:.05em;color:var(--ink-faint);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- hero ---------- */
+  .eyebrow{
+    font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+    margin:0 0 14px;
+  }
+  h1{
+    font-size:40px;line-height:1.15;font-weight:600;margin:0 0 16px;text-wrap:balance;
+  }
+  .lede{color:var(--ink-dim);margin:0 0 30px;max-width:62ch}
+  .overall{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+  .overall-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink-dim);font-size:15px}
+  .overall-num b{color:var(--ink);font-size:22px;font-weight:600}
+  .bar{flex:1;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width .35s ease}
+  .bar.done i{background:var(--done)}
+  .hero{border-bottom:1px solid var(--line);padding-bottom:36px;margin-bottom:12px}
+
+  /* ---------- domains ---------- */
+  .domain{margin-top:44px}
+  .domain-head{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+    border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:6px;
+  }
+  .d-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 4px}
+  .d-eyebrow b{color:var(--accent);font-weight:400}
+  h2{font-size:23px;font-weight:600;margin:0;line-height:1.3;text-wrap:balance}
+  .d-progress{display:flex;align-items:center;gap:10px;flex:none;padding-bottom:4px}
+  .d-count{font-size:12.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bar.sm{width:72px;flex:none}
+
+  /* ---------- tasks ---------- */
+  .task{border-bottom:1px solid rgba(46,40,34,.55)}
+  .task:last-child{border-bottom:none}
+  .task-row{display:flex;gap:14px;padding:14px 10px 14px 6px;margin:0 -10px 0 -6px;border-radius:6px;transition:background .15s}
+  .task-row:hover{background:rgba(255,255,255,.025)}
+  .tick{
+    flex:none;width:19px;height:19px;margin-top:5px;
+    border:1.5px solid var(--ink-faint);border-radius:4px;background:none;cursor:pointer;
+    display:grid;place-items:center;transition:border-color .15s,background .15s;padding:0;
+  }
+  .tick:hover{border-color:var(--ink-dim)}
+  .tick svg{width:12px;height:12px;opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s}
+  .task.done .tick{background:var(--done);border-color:var(--done)}
+  .task.done .tick svg{opacity:1;transform:scale(1)}
+  .task.done .tick svg path{stroke:#1c231b}
+  .task-body{flex:1;min-width:0}
+  h3.t-title{font-size:17.5px;font-weight:600;margin:0;line-height:1.45}
+  .t-num{color:var(--accent);font-weight:400;font-variant-numeric:tabular-nums;margin-right:2px}
+  .task.done h3 .editable{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:rgba(111,102,87,.6);text-decoration-thickness:1px}
+
+  details{margin-top:2px}
+  summary{
+    list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+    font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);
+    padding:3px 0;user-select:none;transition:color .15s;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary:hover{color:var(--ink-dim)}
+  summary::before{
+    content:"";width:0;height:0;flex:none;
+    border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;
+    transition:transform .15s;
+  }
+  details[open] summary::before{transform:rotate(90deg)}
+  .ks{padding:6px 0 12px 2px}
+  .ks h4{
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:400;
+    color:var(--accent);margin:14px 0 6px;
+  }
+  .ks h4:first-child{margin-top:4px}
+  .ks ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+  .ks li{font-size:15.5px;line-height:1.55;color:var(--ink-dim)}
+  .ks li::marker{color:var(--ink-faint)}
+  code{
+    font-family:var(--mono);font-size:.82em;color:var(--ink);
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05);
+    border-radius:4px;padding:.08em .35em;white-space:nowrap;
+  }
+
+  /* ---------- edit mode ---------- */
+  body.editing .editable{
+    outline:1px dashed rgba(201,120,79,.45);outline-offset:2px;border-radius:2px;
+    cursor:text;min-width:1ch;
+  }
+  body.editing .editable:focus{outline-style:solid;background:var(--accent-soft)}
+  .edit-banner{
+    display:none;position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:10;
+    background:var(--bg-panel);border:1px solid var(--accent);color:var(--ink-dim);
+    font-size:13px;padding:7px 16px;border-radius:20px;
+  }
+  body.editing .edit-banner{display:block}
+
+  /* ---------- sync panel ---------- */
+  .panel-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:19}
+  .panel{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;
+    width:min(560px,calc(100vw - 32px));max-height:85vh;overflow-y:auto;
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;
+    padding:28px 30px;
+  }
+  .panel h2{font-size:20px;margin-bottom:6px}
+  .panel .hint{font-size:14px;color:var(--ink-dim);margin:0 0 18px;line-height:1.55}
+  .panel label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 5px}
+  .panel input[type=text],.panel input[type=password]{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+    color:var(--ink);font-family:var(--mono);font-size:13px;padding:9px 11px;
+  }
+  .panel input:focus{outline:none;border-color:var(--accent)}
+  .panel-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .panel button{
+    font-family:var(--serif);font-size:12px;letter-spacing:.07em;text-transform:uppercase;
+    background:none;border:1px solid var(--line);border-radius:6px;color:var(--ink-dim);
+    padding:8px 16px;cursor:pointer;transition:color .15s,border-color .15s;
+  }
+  .panel button:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .panel button.primary{border-color:var(--accent);color:var(--accent)}
+  .panel button.primary:hover{background:var(--accent-soft)}
+  .panel .warn{font-size:13px;color:var(--ink-faint);border-left:2px solid var(--accent);padding-left:12px;margin-top:20px;line-height:1.5}
+  .sql-note{font-size:13px;color:var(--ink-faint);margin-top:18px;line-height:1.5}
+
+  footer{
+    margin-top:70px;border-top:1px solid var(--line);padding-top:20px;
+    font-size:13px;color:var(--ink-faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+
+  @media (max-width:640px){
+    main{padding:96px 18px 90px}
+    h1{font-size:31px}
+    .domain-head{flex-direction:column;align-items:flex-start;gap:8px}
+    .toolbar{left:16px;justify-content:space-between}
+    #syncLabel{max-width:70px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none!important;animation:none!important}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar" role="toolbar" aria-label="Ações">
+  <span class="sync-state"><span class="dot" id="syncDot"></span><span id="syncLabel">só neste navegador</span></span>
+  <button id="btnEdit" title="Editar o texto dos tópicos">Modo edição</button>
+  <button id="btnSync" title="Configurar sincronização entre computadores">Sync</button>
+  <button id="btnExport" title="Baixar progresso como JSON">Exportar</button>
+  <button id="btnImport" title="Carregar progresso de um JSON">Importar</button>
+  <input type="file" id="fileImport" accept="application/json" hidden>
+</div>
+<div class="edit-banner">Modo edição ativo: clique em qualquer texto para alterar. As mudanças são salvas junto com o progresso.</div>
+
+<main>
+  <header class="hero">
+    <p class="eyebrow">Claude Certification Program · CCAR-F · Guia v1.0 · Julho 2026</p>
+    <h1>Objetivos detalhados por domínio</h1>
+    <p class="lede">Checklist de estudo montado a partir do Tópico 6 do Exam Guide oficial. Cada item é um task statement que a prova mede. Marque conforme dominar o conteúdo e expanda cada tópico para ver o detalhamento de <em>Knowledge</em> e <em>Skills</em>.</p>
+    <div class="overall">
+      <span class="overall-num"><b id="doneCount">0</b> / 30 tópicos</span>
+      <div class="bar" id="overallBarWrap"><i id="overallBar"></i></div>
+    </div>
+  </header>
+
+  <!-- ==================== DOMÍNIO 1 ==================== -->
+  <section class="domain" data-domain="d1">
+    <header class="domain-head">
+      <div>
+        <p class="d-eyebrow">Domínio 1 · <b>peso 27%</b> · 7 tópicos</p>
+        <h2><span class="editable">Agentic Architecture &amp; Orchestration</span></h2>
+      </div>
+      <div class="d-progress"><span class="d-count">0/7</span><div class="bar sm"><i></i></div></div>
+    </header>
+
+    <article class="task" data-task="1.1">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.1"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.1</span><span class="editable">Design and implement agentic loops for autonomous task execution</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">The agentic loop lifecycle: sending requests to Claude, inspecting <code>stop_reason</code> (<code>tool_use</code> vs <code>end_turn</code>), executing requested tools, and returning results for the next iteration</li>
+              <li class="editable">How tool results are appended to conversation history so the model can reason about the next action</li>
+              <li class="editable">The distinction between model-driven decision-making and pre-configured decision trees or tool sequences</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Implementing loop control flow that continues on <code>tool_use</code> and terminates on <code>end_turn</code></li>
+              <li class="editable">Adding tool results to conversation context between iterations so the model incorporates new information</li>
+              <li class="editable">Avoiding anti-patterns: parsing natural language to decide termination, arbitrary iteration caps as the primary stop, checking assistant text as completion indicator</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="1.2">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.2"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.2</span><span class="editable">Orchestrate multi-agent systems with coordinator-subagent patterns</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Hub-and-spoke architecture: the coordinator manages all inter-subagent communication, error handling, and information routing</li>
+              <li class="editable">Subagents operate with isolated context: they do not inherit the coordinator's conversation history automatically</li>
+              <li class="editable">The coordinator's role in task decomposition, delegation, result aggregation, and deciding which subagents to invoke based on query complexity</li>
+              <li class="editable">Risks of overly narrow task decomposition, leading to incomplete coverage of broad research topics</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Designing coordinators that analyze query requirements and dynamically select which subagents to invoke, rather than always running the full pipeline</li>
+              <li class="editable">Partitioning research scope across subagents to minimize duplication (distinct subtopics or source types per agent)</li>
+              <li class="editable">Iterative refinement loops: evaluate synthesis output for gaps, re-delegate with targeted queries, re-invoke synthesis until coverage is sufficient</li>
+              <li class="editable">Routing all subagent communication through the coordinator for observability, consistent error handling, and controlled information flow</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="1.3">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.3"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.3</span><span class="editable">Configure subagent invocation, context passing, and spawning</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">The Task tool as the mechanism for spawning subagents; <code>allowedTools</code> must include <code>"Task"</code> for a coordinator to invoke subagents</li>
+              <li class="editable">Subagent context must be explicitly provided in the prompt: no automatic inheritance of parent context, no shared memory between invocations</li>
+              <li class="editable"><code>AgentDefinition</code> configuration: descriptions, system prompts, and tool restrictions per subagent type</li>
+              <li class="editable">Fork-based session management for exploring divergent approaches from a shared analysis baseline</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Including complete findings from prior agents directly in the subagent's prompt (e.g., passing search results and document analysis to the synthesis subagent)</li>
+              <li class="editable">Using structured data formats to separate content from metadata (source URLs, document names, page numbers) to preserve attribution</li>
+              <li class="editable">Spawning parallel subagents by emitting multiple Task tool calls in a single coordinator response, not across separate turns</li>
+              <li class="editable">Writing coordinator prompts that specify research goals and quality criteria rather than step-by-step procedures, enabling subagent adaptability</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="1.4">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.4"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.4</span><span class="editable">Implement multi-step workflows with enforcement and handoff patterns</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Programmatic enforcement (hooks, prerequisite gates) vs prompt-based guidance for workflow ordering</li>
+              <li class="editable">When deterministic compliance is required (e.g., identity verification before financial operations), prompt instructions alone have a non-zero failure rate</li>
+              <li class="editable">Structured handoff protocols for mid-process escalation: customer details, root cause analysis, recommended actions</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Programmatic prerequisites that block downstream tool calls until prerequisites complete (e.g., blocking <code>process_refund</code> until <code>get_customer</code> returns a verified ID)</li>
+              <li class="editable">Decomposing multi-concern requests into distinct items, investigating each in parallel with shared context, then synthesizing a unified resolution</li>
+              <li class="editable">Compiling structured handoff summaries (customer ID, root cause, refund amount, recommended action) when escalating to humans without transcript access</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="1.5">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.5"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.5</span><span class="editable">Apply Agent SDK hooks for tool call interception and data normalization</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Hook patterns (e.g., <code>PostToolUse</code>) that intercept tool results for transformation before the model processes them</li>
+              <li class="editable">Hooks that intercept outgoing tool calls to enforce compliance rules (e.g., blocking refunds above a threshold)</li>
+              <li class="editable">Hooks for deterministic guarantees vs prompt instructions for probabilistic compliance</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable"><code>PostToolUse</code> hooks to normalize heterogeneous data formats (Unix timestamps, ISO 8601, numeric status codes) coming from different MCP tools</li>
+              <li class="editable">Interception hooks that block policy-violating actions (e.g., refunds above $500) and redirect to alternative workflows such as human escalation</li>
+              <li class="editable">Choosing hooks over prompt-based enforcement when business rules require guaranteed compliance</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="1.6">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.6"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.6</span><span class="editable">Design task decomposition strategies for complex workflows</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Fixed sequential pipelines (prompt chaining) vs dynamic adaptive decomposition based on intermediate findings</li>
+              <li class="editable">Prompt chaining patterns that break reviews into sequential steps (analyze each file individually, then a cross-file integration pass)</li>
+              <li class="editable">The value of adaptive investigation plans that generate subtasks based on what is discovered at each step</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Selecting the pattern per workflow: prompt chaining for predictable multi-aspect reviews, dynamic decomposition for open-ended investigation</li>
+              <li class="editable">Splitting large code reviews into per-file local passes plus a separate cross-file integration pass to avoid attention dilution</li>
+              <li class="editable">Decomposing open-ended tasks (e.g., "add comprehensive tests to a legacy codebase") by first mapping structure, identifying high-impact areas, then creating a prioritized plan that adapts as dependencies are discovered</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="1.7">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 1.7"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">1.7</span><span class="editable">Manage session state, resumption, and forking</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Named session resumption with <code>--resume &lt;session-name&gt;</code> to continue a specific prior conversation</li>
+              <li class="editable"><code>fork_session</code> for creating independent branches from a shared analysis baseline to explore divergent approaches</li>
+              <li class="editable">Informing the agent about changes to previously analyzed files when resuming after code modifications</li>
+              <li class="editable">Why starting a new session with a structured summary is more reliable than resuming with stale tool results</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Using <code>--resume</code> with session names to continue named investigations across work sessions</li>
+              <li class="editable">Using <code>fork_session</code> for parallel exploration branches (e.g., comparing two testing strategies from a shared codebase analysis)</li>
+              <li class="editable">Choosing between resumption (prior context mostly valid) and starting fresh with injected summaries (prior tool results stale)</li>
+              <li class="editable">Informing a resumed session about specific file changes for targeted re-analysis instead of full re-exploration</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ==================== DOMÍNIO 2 ==================== -->
+  <section class="domain" data-domain="d2">
+    <header class="domain-head">
+      <div>
+        <p class="d-eyebrow">Domínio 2 · <b>peso 18%</b> · 5 tópicos</p>
+        <h2><span class="editable">Tool Design &amp; MCP Integration</span></h2>
+      </div>
+      <div class="d-progress"><span class="d-count">0/5</span><div class="bar sm"><i></i></div></div>
+    </header>
+
+    <article class="task" data-task="2.1">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 2.1"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">2.1</span><span class="editable">Design effective tool interfaces with clear descriptions and boundaries</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Tool descriptions as the primary mechanism LLMs use for tool selection; minimal descriptions lead to unreliable selection among similar tools</li>
+              <li class="editable">The importance of input formats, example queries, edge cases, and boundary explanations in tool descriptions</li>
+              <li class="editable">How ambiguous or overlapping descriptions cause misrouting (e.g., <code>analyze_content</code> vs <code>analyze_document</code> with near-identical descriptions)</li>
+              <li class="editable">The impact of system prompt wording on tool selection: keyword-sensitive instructions can create unintended tool associations</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Writing descriptions that clearly differentiate each tool's purpose, expected inputs, outputs, and when to use it vs similar alternatives</li>
+              <li class="editable">Renaming tools and updating descriptions to eliminate functional overlap (e.g., <code>analyze_content</code> → <code>extract_web_results</code> with a web-specific description)</li>
+              <li class="editable">Splitting generic tools into purpose-specific tools with defined input/output contracts (e.g., <code>analyze_document</code> → <code>extract_data_points</code>, <code>summarize_content</code>, <code>verify_claim_against_source</code>)</li>
+              <li class="editable">Reviewing system prompts for keyword-sensitive instructions that might override well-written tool descriptions</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="2.2">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 2.2"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">2.2</span><span class="editable">Implement structured error responses for MCP tools</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">The MCP <code>isError</code> flag pattern for communicating tool failures back to the agent</li>
+              <li class="editable">Transient errors (timeouts, service unavailability) vs validation errors (invalid input) vs business errors (policy violations) vs permission errors</li>
+              <li class="editable">Why uniform error responses (generic "Operation failed") prevent appropriate recovery decisions</li>
+              <li class="editable">Retryable vs non-retryable errors, and how structured metadata prevents wasted retry attempts</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Returning structured error metadata: <code>errorCategory</code> (transient/validation/permission), <code>isRetryable</code> boolean, human-readable descriptions</li>
+              <li class="editable">Including <code>retriable: false</code> flags and customer-friendly explanations for business rule violations so the agent communicates appropriately</li>
+              <li class="editable">Local error recovery within subagents for transient failures; propagating to the coordinator only unresolvable errors, with partial results and what was attempted</li>
+              <li class="editable">Distinguishing access failures (needing retry decisions) from valid empty results (successful queries with no matches)</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="2.3">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 2.3"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">2.3</span><span class="editable">Distribute tools appropriately across agents and configure tool choice</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Too many tools (e.g., 18 instead of 4-5) degrades selection reliability by increasing decision complexity</li>
+              <li class="editable">Agents with tools outside their specialization tend to misuse them (e.g., a synthesis agent attempting web searches)</li>
+              <li class="editable">Scoped tool access: only the tools needed for the role, with limited cross-role tools for specific high-frequency needs</li>
+              <li class="editable"><code>tool_choice</code> options: <code>"auto"</code>, <code>"any"</code>, and forced selection <code>{"type": "tool", "name": "..."}</code></li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Restricting each subagent's tool set to its role, preventing cross-specialization misuse</li>
+              <li class="editable">Replacing generic tools with constrained alternatives (e.g., <code>fetch_url</code> → <code>load_document</code> that validates document URLs)</li>
+              <li class="editable">Scoped cross-role tools for high-frequency needs (e.g., <code>verify_fact</code> for the synthesis agent), routing complex cases through the coordinator</li>
+              <li class="editable">Forced selection to guarantee a specific tool runs first (e.g., <code>extract_metadata</code> before enrichment), processing subsequent steps in follow-up turns</li>
+              <li class="editable"><code>tool_choice: "any"</code> to guarantee the model calls a tool rather than returning conversational text</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="2.4">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 2.4"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">2.4</span><span class="editable">Integrate MCP servers into Claude Code and agent workflows</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">MCP server scoping: project-level <code>.mcp.json</code> for shared team tooling vs user-level <code>~/.claude.json</code> for personal/experimental servers</li>
+              <li class="editable">Environment variable expansion in <code>.mcp.json</code> (e.g., <code>${GITHUB_TOKEN}</code>) for credential management without committing secrets</li>
+              <li class="editable">Tools from all configured MCP servers are discovered at connection time and available simultaneously to the agent</li>
+              <li class="editable">MCP resources as a mechanism for exposing content catalogs (issue summaries, documentation hierarchies, database schemas) to reduce exploratory tool calls</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Configuring shared MCP servers in project-scoped <code>.mcp.json</code> with env var expansion for auth tokens</li>
+              <li class="editable">Configuring personal/experimental MCP servers in user-scoped <code>~/.claude.json</code></li>
+              <li class="editable">Enhancing MCP tool descriptions with capabilities and outputs in detail, preventing the agent from preferring built-ins (like Grep) over more capable MCP tools</li>
+              <li class="editable">Choosing existing community MCP servers for standard integrations (e.g., Jira), reserving custom servers for team-specific workflows</li>
+              <li class="editable">Exposing content catalogs as MCP resources to give agents visibility into available data without exploratory tool calls</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="2.5">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 2.5"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">2.5</span><span class="editable">Select and apply built-in tools (Read, Write, Edit, Bash, Grep, Glob) effectively</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Grep for content search (patterns like function names, error messages, import statements)</li>
+              <li class="editable">Glob for file path pattern matching (finding files by name or extension patterns)</li>
+              <li class="editable">Read/Write for full file operations; Edit for targeted modifications using unique text matching</li>
+              <li class="editable">When Edit fails due to non-unique text matches, Read + Write as fallback for reliable modifications</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Selecting Grep for searching code content across a codebase (all callers of a function, locating error messages)</li>
+              <li class="editable">Selecting Glob for naming patterns (e.g., <code>**/*.test.tsx</code>)</li>
+              <li class="editable">Using Read to load full contents followed by Write when Edit cannot find unique anchor text</li>
+              <li class="editable">Building codebase understanding incrementally: Grep for entry points, then Read to follow imports and trace flows, rather than reading all files upfront</li>
+              <li class="editable">Tracing function usage across wrapper modules: first identify all exported names, then search each across the codebase</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ==================== DOMÍNIO 3 ==================== -->
+  <section class="domain" data-domain="d3">
+    <header class="domain-head">
+      <div>
+        <p class="d-eyebrow">Domínio 3 · <b>peso 20%</b> · 6 tópicos</p>
+        <h2><span class="editable">Claude Code Configuration &amp; Workflows</span></h2>
+      </div>
+      <div class="d-progress"><span class="d-count">0/6</span><div class="bar sm"><i></i></div></div>
+    </header>
+
+    <article class="task" data-task="3.1">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 3.1"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">3.1</span><span class="editable">Configure CLAUDE.md files with appropriate hierarchy, scoping, and modular organization</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">The hierarchy: user-level <code>~/.claude/CLAUDE.md</code>, project-level (<code>.claude/CLAUDE.md</code> or root <code>CLAUDE.md</code>), directory-level (subdirectory CLAUDE.md files)</li>
+              <li class="editable">User-level settings apply only to that user: instructions in <code>~/.claude/CLAUDE.md</code> are not shared with teammates via version control</li>
+              <li class="editable">The <code>@import</code> syntax for referencing external files to keep CLAUDE.md modular (importing standards files per package)</li>
+              <li class="editable"><code>.claude/rules/</code> directory for topic-specific rule files as an alternative to a monolithic CLAUDE.md</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Diagnosing hierarchy issues (e.g., a new team member not receiving instructions because they're in user-level, not project-level config)</li>
+              <li class="editable">Using <code>@import</code> to selectively include relevant standards files in each package's CLAUDE.md</li>
+              <li class="editable">Splitting large CLAUDE.md files into focused topic files in <code>.claude/rules/</code> (testing.md, api-conventions.md, deployment.md)</li>
+              <li class="editable">Using the <code>/memory</code> command to verify which memory files are loaded and diagnose inconsistent behavior across sessions</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="3.2">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 3.2"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">3.2</span><span class="editable">Create and configure custom slash commands and skills</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Project-scoped commands in <code>.claude/commands/</code> (shared via version control) vs user-scoped in <code>~/.claude/commands/</code> (personal)</li>
+              <li class="editable">Skills in <code>.claude/skills/</code> with SKILL.md frontmatter: <code>context: fork</code>, <code>allowed-tools</code>, <code>argument-hint</code></li>
+              <li class="editable"><code>context: fork</code> for running skills in an isolated sub-agent context, preventing skill output from polluting the main conversation</li>
+              <li class="editable">Personal skill customization: variants in <code>~/.claude/skills/</code> with different names to avoid affecting teammates</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Creating project-scoped slash commands in <code>.claude/commands/</code> for team-wide availability via version control</li>
+              <li class="editable">Using <code>context: fork</code> to isolate skills with verbose output (codebase analysis) or exploratory context (brainstorming)</li>
+              <li class="editable">Configuring <code>allowed-tools</code> in frontmatter to restrict tool access during skill execution (e.g., limiting file writes to prevent destructive actions)</li>
+              <li class="editable">Using <code>argument-hint</code> to prompt developers for required parameters when invoking the skill without arguments</li>
+              <li class="editable">Choosing between skills (on-demand, task-specific workflows) and CLAUDE.md (always-loaded universal standards)</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="3.3">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 3.3"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">3.3</span><span class="editable">Apply path-specific rules for conditional convention loading</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable"><code>.claude/rules/</code> files with YAML frontmatter <code>paths</code> fields containing glob patterns for conditional activation</li>
+              <li class="editable">Path-scoped rules load only when editing matching files, reducing irrelevant context and token usage</li>
+              <li class="editable">The advantage of glob-pattern rules over directory-level CLAUDE.md for conventions spanning multiple directories (e.g., test files spread throughout a codebase)</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Creating <code>.claude/rules/</code> files with path scoping (e.g., <code>paths: ["terraform/**/*"]</code>) so rules load only for matching files</li>
+              <li class="editable">Using glob patterns to apply conventions by file type regardless of directory (e.g., <code>**/*.test.tsx</code> for all test files)</li>
+              <li class="editable">Choosing path-specific rules over subdirectory CLAUDE.md when conventions must apply to files spread across the codebase</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="3.4">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 3.4"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">3.4</span><span class="editable">Determine when to use plan mode vs direct execution</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Plan mode for complex tasks: large-scale changes, multiple valid approaches, architectural decisions, multi-file modifications</li>
+              <li class="editable">Direct execution for simple, well-scoped changes (e.g., adding a single validation check to one function)</li>
+              <li class="editable">Plan mode enables safe exploration and design before committing to changes, preventing costly rework</li>
+              <li class="editable">The Explore subagent for isolating verbose discovery output and returning summaries, preserving main conversation context</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Selecting plan mode for architectural implications (microservice restructuring, migrations affecting 45+ files, choosing between integration approaches)</li>
+              <li class="editable">Selecting direct execution for well-understood changes with clear scope (single-file bug fix with a clear stack trace)</li>
+              <li class="editable">Using the Explore subagent for verbose discovery phases to prevent context window exhaustion in multi-phase tasks</li>
+              <li class="editable">Combining plan mode for investigation with direct execution for implementation (plan a migration, then execute the planned approach)</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="3.5">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 3.5"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">3.5</span><span class="editable">Apply iterative refinement techniques for progressive improvement</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Concrete input/output examples as the most effective way to communicate expected transformations when prose is interpreted inconsistently</li>
+              <li class="editable">Test-driven iteration: write test suites first, then iterate by sharing test failures to guide improvement</li>
+              <li class="editable">The interview pattern: having Claude ask questions to surface considerations the developer may not have anticipated</li>
+              <li class="editable">When to provide all issues in a single message (interacting problems) vs fixing sequentially (independent problems)</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Providing 2-3 concrete input/output examples to clarify transformation requirements when descriptions produce inconsistent results</li>
+              <li class="editable">Writing test suites covering expected behavior, edge cases, and performance before implementation, then iterating on failures</li>
+              <li class="editable">Using the interview pattern to surface design considerations (cache invalidation strategies, failure modes) in unfamiliar domains</li>
+              <li class="editable">Providing specific test cases with example input and expected output to fix edge case handling (e.g., null values in migration scripts)</li>
+              <li class="editable">Addressing multiple interacting issues in a single detailed message when fixes interact, vs sequential iteration for independent issues</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="3.6">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 3.6"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">3.6</span><span class="editable">Integrate Claude Code into CI/CD pipelines</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">The <code>-p</code> (<code>--print</code>) flag for non-interactive mode in automated pipelines</li>
+              <li class="editable"><code>--output-format json</code> and <code>--json-schema</code> CLI flags for enforcing structured output in CI contexts</li>
+              <li class="editable">CLAUDE.md as the mechanism for providing project context (testing standards, fixture conventions, review criteria) to CI-invoked Claude Code</li>
+              <li class="editable">Session context isolation: the same session that generated code is less effective at reviewing its own changes than an independent review instance</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Running Claude Code in CI with <code>-p</code> to prevent interactive input hangs</li>
+              <li class="editable">Using <code>--output-format json</code> with <code>--json-schema</code> for machine-parseable findings (automated posting as inline PR comments)</li>
+              <li class="editable">Including prior review findings when re-running reviews after new commits, instructing to report only new or still-unaddressed issues</li>
+              <li class="editable">Providing existing test files in context so test generation avoids duplicating covered scenarios</li>
+              <li class="editable">Documenting testing standards, valuable test criteria, and available fixtures in CLAUDE.md to improve generation quality</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ==================== DOMÍNIO 4 ==================== -->
+  <section class="domain" data-domain="d4">
+    <header class="domain-head">
+      <div>
+        <p class="d-eyebrow">Domínio 4 · <b>peso 20%</b> · 6 tópicos</p>
+        <h2><span class="editable">Prompt Engineering &amp; Structured Output</span></h2>
+      </div>
+      <div class="d-progress"><span class="d-count">0/6</span><div class="bar sm"><i></i></div></div>
+    </header>
+
+    <article class="task" data-task="4.1">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 4.1"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">4.1</span><span class="editable">Design prompts with explicit criteria to improve precision and reduce false positives</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Explicit criteria over vague instructions ("flag comments only when claimed behavior contradicts actual code behavior" vs "check that comments are accurate")</li>
+              <li class="editable">How general instructions like "be conservative" or "only report high-confidence findings" fail to improve precision compared to specific categorical criteria</li>
+              <li class="editable">The impact of false positive rates on developer trust: high false-positive categories undermine confidence in accurate ones</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Writing specific review criteria defining which issues to report (bugs, security) vs skip (minor style, local patterns), rather than confidence-based filtering</li>
+              <li class="editable">Temporarily disabling high false-positive categories to restore trust while improving prompts for those categories</li>
+              <li class="editable">Defining explicit severity criteria with concrete code examples per severity level for consistent classification</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="4.2">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 4.2"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">4.2</span><span class="editable">Apply few-shot prompting to improve output consistency and quality</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Few-shot examples as the most effective technique for consistently formatted, actionable output when detailed instructions alone are inconsistent</li>
+              <li class="editable">The role of few-shot examples in demonstrating ambiguous-case handling (tool selection for ambiguous requests, branch-level coverage gaps)</li>
+              <li class="editable">How few-shot examples enable the model to generalize judgment to novel patterns, not just match pre-specified cases</li>
+              <li class="editable">Effectiveness of few-shot examples for reducing hallucination in extraction tasks (informal measurements, varied document structures)</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Creating 2-4 targeted examples for ambiguous scenarios showing the reasoning for why one action beats plausible alternatives</li>
+              <li class="editable">Examples demonstrating the specific desired output format (location, issue, severity, suggested fix) for consistency</li>
+              <li class="editable">Examples distinguishing acceptable code patterns from genuine issues, reducing false positives while enabling generalization</li>
+              <li class="editable">Examples demonstrating correct handling of varied document structures (inline citations vs bibliographies, methodology sections vs embedded details)</li>
+              <li class="editable">Examples showing correct extraction from varied formats to address empty/null extraction of required fields</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="4.3">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 4.3"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">4.3</span><span class="editable">Enforce structured output using tool use and JSON schemas</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable"><code>tool_use</code> with JSON schemas as the most reliable approach for guaranteed schema-compliant output, eliminating JSON syntax errors</li>
+              <li class="editable"><code>tool_choice: "auto"</code> (may return text) vs <code>"any"</code> (must call some tool) vs forced selection (must call a specific named tool)</li>
+              <li class="editable">Strict schemas eliminate syntax errors but not semantic errors (line items that don't sum to total, values in wrong fields)</li>
+              <li class="editable">Schema design: required vs optional fields, enum fields with <code>"other"</code> + detail string for extensible categories</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Defining extraction tools with JSON schemas as input parameters and extracting structured data from the <code>tool_use</code> response</li>
+              <li class="editable"><code>tool_choice: "any"</code> to guarantee structured output when multiple extraction schemas exist and the document type is unknown</li>
+              <li class="editable">Forcing a specific tool with <code>tool_choice: {"type": "tool", "name": "extract_metadata"}</code> to ensure an extraction runs before enrichment steps</li>
+              <li class="editable">Designing fields as optional (nullable) when source documents may lack the information, preventing fabricated values for required fields</li>
+              <li class="editable">Adding enum values like <code>"unclear"</code> for ambiguous cases and <code>"other"</code> + detail fields for extensible categorization</li>
+              <li class="editable">Including format normalization rules in prompts alongside strict schemas to handle inconsistent source formatting</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="4.4">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 4.4"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">4.4</span><span class="editable">Implement validation, retry, and feedback loops for extraction quality</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Retry-with-error-feedback: appending specific validation errors to the prompt on retry to guide correction</li>
+              <li class="editable">The limits of retry: ineffective when the required information is simply absent from the source (vs format or structural errors)</li>
+              <li class="editable">Feedback loop design: tracking which code constructs trigger findings (<code>detected_pattern</code> field) to analyze dismissal patterns systematically</li>
+              <li class="editable">Semantic validation errors (values don't sum, wrong field placement) vs schema syntax errors (eliminated by tool use)</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Follow-up requests including the original document, the failed extraction, and specific validation errors for self-correction</li>
+              <li class="editable">Identifying when retries are ineffective (info only in an external document not provided) vs when they succeed (format mismatches, structural errors)</li>
+              <li class="editable">Adding <code>detected_pattern</code> fields to structured findings to analyze false positive patterns when developers dismiss findings</li>
+              <li class="editable">Self-correction validation flows: extracting <code>calculated_total</code> alongside <code>stated_total</code> to flag discrepancies, <code>conflict_detected</code> booleans for inconsistent source data</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="4.5">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 4.5"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">4.5</span><span class="editable">Design efficient batch processing strategies</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">The Message Batches API: 50% cost savings, up to 24-hour processing window, no guaranteed latency SLA</li>
+              <li class="editable">Appropriate for non-blocking, latency-tolerant workloads (overnight reports, weekly audits, nightly test generation); inappropriate for blocking workflows (pre-merge checks)</li>
+              <li class="editable">The batch API does not support multi-turn tool calling within a single request (cannot execute tools mid-request and return results)</li>
+              <li class="editable"><code>custom_id</code> fields for correlating batch request/response pairs</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Matching API to latency requirements: synchronous API for blocking pre-merge checks, batch API for overnight/weekly analysis</li>
+              <li class="editable">Calculating batch submission frequency from SLA constraints (e.g., 4-hour windows to guarantee a 30-hour SLA with 24-hour processing)</li>
+              <li class="editable">Handling batch failures: resubmitting only failed documents (identified by <code>custom_id</code>) with modifications (chunking documents that exceeded context limits)</li>
+              <li class="editable">Prompt refinement on a sample set before batch-processing large volumes, to maximize first-pass success and reduce resubmission costs</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="4.6">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 4.6"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">4.6</span><span class="editable">Design multi-instance and multi-pass review architectures</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Self-review limitations: a model retains reasoning context from generation, making it less likely to question its own decisions in the same session</li>
+              <li class="editable">Independent review instances (without prior reasoning context) catch subtle issues better than self-review instructions or extended thinking</li>
+              <li class="editable">Multi-pass review: per-file local analysis passes plus cross-file integration passes, avoiding attention dilution and contradictory findings</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Using a second independent instance to review generated code without the generator's reasoning context</li>
+              <li class="editable">Splitting large multi-file reviews into focused per-file passes plus separate integration passes for cross-file data flow</li>
+              <li class="editable">Verification passes where the model self-reports confidence per finding, enabling calibrated review routing</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ==================== DOMÍNIO 5 ==================== -->
+  <section class="domain" data-domain="d5">
+    <header class="domain-head">
+      <div>
+        <p class="d-eyebrow">Domínio 5 · <b>peso 15%</b> · 6 tópicos</p>
+        <h2><span class="editable">Context Management &amp; Reliability</span></h2>
+      </div>
+      <div class="d-progress"><span class="d-count">0/6</span><div class="bar sm"><i></i></div></div>
+    </header>
+
+    <article class="task" data-task="5.1">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 5.1"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">5.1</span><span class="editable">Manage conversation context to preserve critical information across long interactions</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Progressive summarization risks: condensing numerical values, percentages, dates, and customer-stated expectations into vague summaries</li>
+              <li class="editable">The "lost in the middle" effect: models reliably process the beginning and end of long inputs but may omit findings from middle sections</li>
+              <li class="editable">Tool results accumulate in context and consume tokens disproportionately to relevance (40+ fields per order lookup when only 5 matter)</li>
+              <li class="editable">The importance of passing complete conversation history in subsequent API requests for conversational coherence</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Extracting transactional facts (amounts, dates, order numbers, statuses) into a persistent "case facts" block included in each prompt, outside summarized history</li>
+              <li class="editable">Extracting and persisting structured issue data (order IDs, amounts, statuses) into a separate context layer for multi-issue sessions</li>
+              <li class="editable">Trimming verbose tool outputs to relevant fields before they accumulate in context</li>
+              <li class="editable">Placing key findings summaries at the beginning of aggregated inputs and organizing detailed results with explicit section headers to mitigate position effects</li>
+              <li class="editable">Requiring subagents to include metadata (dates, source locations, methodological context) in structured outputs for accurate downstream synthesis</li>
+              <li class="editable">Modifying upstream agents to return structured data (key facts, citations, relevance scores) instead of verbose reasoning when downstream context budgets are limited</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="5.2">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 5.2"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">5.2</span><span class="editable">Design effective escalation and ambiguity resolution patterns</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Appropriate escalation triggers: customer requests for a human, policy exceptions/gaps (not just complex cases), inability to make meaningful progress</li>
+              <li class="editable">Escalating immediately when explicitly demanded vs offering to resolve when the issue is straightforward</li>
+              <li class="editable">Why sentiment-based escalation and self-reported confidence scores are unreliable proxies for actual case complexity</li>
+              <li class="editable">Multiple customer matches require clarification (additional identifiers), not heuristic selection</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Adding explicit escalation criteria with few-shot examples to the system prompt demonstrating when to escalate vs resolve autonomously</li>
+              <li class="editable">Honoring explicit customer requests for humans immediately, without first attempting investigation</li>
+              <li class="editable">Acknowledging frustration while offering resolution when within capability, escalating only if the customer reiterates</li>
+              <li class="editable">Escalating when policy is ambiguous or silent on the request (e.g., competitor price matching when policy only covers own-site adjustments)</li>
+              <li class="editable">Instructing the agent to ask for additional identifiers on multiple matches, rather than selecting by heuristics</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="5.3">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 5.3"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">5.3</span><span class="editable">Implement error propagation strategies across multi-agent systems</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Structured error context (failure type, attempted query, partial results, alternative approaches) enabling intelligent coordinator recovery</li>
+              <li class="editable">Access failures (timeouts needing retry decisions) vs valid empty results (successful queries with no matches)</li>
+              <li class="editable">Why generic error statuses ("search unavailable") hide valuable context from the coordinator</li>
+              <li class="editable">Silently suppressing errors (empty results as success) and terminating entire workflows on single failures are both anti-patterns</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Returning structured error context: failure type, what was attempted, partial results, potential alternatives</li>
+              <li class="editable">Distinguishing access failures from valid empty results in error reporting so the coordinator decides appropriately</li>
+              <li class="editable">Subagents implement local recovery for transient failures and propagate only unresolvable errors, with attempts and partial results</li>
+              <li class="editable">Structuring synthesis output with coverage annotations: which findings are well-supported vs which areas have gaps from unavailable sources</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="5.4">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 5.4"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">5.4</span><span class="editable">Manage context effectively in large codebase exploration</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Context degradation in extended sessions: inconsistent answers, referencing "typical patterns" instead of classes actually discovered earlier</li>
+              <li class="editable">The role of scratchpad files for persisting key findings across context boundaries</li>
+              <li class="editable">Subagent delegation for isolating verbose exploration output while the main agent coordinates high-level understanding</li>
+              <li class="editable">Structured state persistence for crash recovery: each agent exports state to a known location, coordinator loads a manifest on resume</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Spawning subagents for specific questions ("find all test files", "trace refund flow dependencies") while the main agent preserves coordination</li>
+              <li class="editable">Agents maintain scratchpad files recording key findings, referenced for subsequent questions to counteract degradation</li>
+              <li class="editable">Summarizing key findings from one exploration phase before spawning next-phase subagents, injecting summaries into initial context</li>
+              <li class="editable">Designing crash recovery with structured agent state exports (manifests) loaded on resume and injected into agent prompts</li>
+              <li class="editable">Using <code>/compact</code> to reduce context usage when extended sessions fill with verbose discovery output</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="5.5">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 5.5"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">5.5</span><span class="editable">Design human review workflows and confidence calibration</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">Aggregate accuracy metrics (e.g., 97% overall) may mask poor performance on specific document types or fields</li>
+              <li class="editable">Stratified random sampling for measuring error rates in high-confidence extractions and detecting novel error patterns</li>
+              <li class="editable">Field-level confidence scores calibrated with labeled validation sets for routing review attention</li>
+              <li class="editable">Validating accuracy by document type and field segment before automating high-confidence extractions</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Implementing stratified random sampling of high-confidence extractions for ongoing error measurement and novel pattern detection</li>
+              <li class="editable">Analyzing accuracy by document type and field to verify consistent performance across segments before reducing human review</li>
+              <li class="editable">Having models output field-level confidence scores, then calibrating review thresholds with labeled validation sets</li>
+              <li class="editable">Routing low-confidence or ambiguous/contradictory extractions to human review, prioritizing limited reviewer capacity</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+
+    <article class="task" data-task="5.6">
+      <div class="task-row">
+        <button class="tick" aria-pressed="false" aria-label="Marcar tópico 5.6"><svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="task-body">
+          <h3 class="t-title"><span class="t-num">5.6</span><span class="editable">Preserve information provenance and handle uncertainty in multi-source synthesis</span></h3>
+          <details><summary>Knowledge &amp; Skills</summary><div class="ks">
+            <h4>Knowledge of</h4>
+            <ul>
+              <li class="editable">How source attribution is lost during summarization when findings are compressed without claim-source mappings</li>
+              <li class="editable">Structured claim-source mappings that the synthesis agent must preserve and merge when combining findings</li>
+              <li class="editable">Conflicting statistics from credible sources: annotate conflicts with source attribution rather than arbitrarily selecting one value</li>
+              <li class="editable">Temporal data: require publication/collection dates in structured outputs to prevent temporal differences being read as contradictions</li>
+            </ul>
+            <h4>Skills in</h4>
+            <ul>
+              <li class="editable">Requiring subagents to output structured claim-source mappings (URLs, document names, relevant excerpts) preserved through synthesis</li>
+              <li class="editable">Structuring reports with explicit sections distinguishing well-established findings from contested ones, preserving source characterizations and methodological context</li>
+              <li class="editable">Completing document analysis with conflicting values included and explicitly annotated, letting the coordinator decide reconciliation before synthesis</li>
+              <li class="editable">Requiring publication or collection dates in structured outputs for correct temporal interpretation</li>
+              <li class="editable">Rendering content types appropriately in synthesis: financial data as tables, news as prose, technical findings as structured lists, not one uniform format</li>
+            </ul>
+          </div></details>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <footer>
+    <span>Fonte: Claude Certified Architect, Foundations · Exam Guide v1.0 · Tópico 6</span>
+    <span id="lastSaved"></span>
+  </footer>
+</main>
+
+<!-- ==================== PAINEL DE SYNC ==================== -->
+<div class="panel-backdrop" id="panelBackdrop" hidden></div>
+<div class="panel" id="syncPanel" role="dialog" aria-label="Configurar sincronização" hidden>
+  <h2>Sincronizar entre computadores</h2>
+  <p class="hint">O progresso sempre fica salvo neste navegador. Para vê-lo em outros computadores, conecte um projeto Supabase: o arquivo grava um único registro JSON via REST e lê de volta ao abrir. Configure uma vez em cada máquina.</p>
+  <label for="sbUrl">URL do projeto</label>
+  <input type="text" id="sbUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
+  <label for="sbKey">Anon key</label>
+  <input type="password" id="sbKey" placeholder="eyJhbGciOi..." autocomplete="off">
+  <label for="sbDoc">ID do documento</label>
+  <input type="text" id="sbDoc" value="ccarf-study" autocomplete="off" spellcheck="false">
+  <div class="panel-actions">
+    <button class="primary" id="btnConnect">Salvar e sincronizar</button>
+    <button id="btnCopySql">Copiar SQL da tabela</button>
+    <button id="btnDisconnect">Desconectar</button>
+    <button id="btnClosePanel">Fechar</button>
+  </div>
+  <p class="sql-note">Antes da primeira conexão, rode o SQL (botão acima) no SQL Editor do projeto para criar a tabela <code>study_checklist</code> com políticas de leitura e escrita para a anon key.</p>
+  <p class="warn">A anon key dá leitura e escrita nesta tabela para quem a possuir. Use um projeto sem dados sensíveis ou restrinja com RLS mais estrito depois.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LOCAL_KEY = "ccarf-checklist-v1";
+  var CFG_KEY   = "ccarf-sync-cfg";
+  var TABLE     = "study_checklist";
+
+  var SQL = [
+    "create table if not exists public.study_checklist (",
+    "  id text primary key,",
+    "  data jsonb not null,",
+    "  updated_at timestamptz not null default now()",
+    ");",
+    "alter table public.study_checklist enable row level security;",
+    "create policy \"anon select\" on public.study_checklist for select to anon using (true);",
+    "create policy \"anon insert\" on public.study_checklist for insert to anon with check (true);",
+    "create policy \"anon update\" on public.study_checklist for update to anon using (true) with check (true);"
+  ].join("\n");
+
+  var state = { v:1, updatedAt:null, checks:{}, edits:{} };
+  var cfg = null;
+  var pushTimer = null;
+  var saveTimer = null;
+
+  /* ---------- helpers ---------- */
+  function $(s){ return document.querySelector(s); }
+  function $all(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
+  function nowIso(){ return new Date().toISOString(); }
+
+  function setSync(kind,label){
+    var dot = $("#syncDot");
+    dot.className = "dot" + (kind ? " " + kind : "");
+    $("#syncLabel").textContent = label;
+  }
+
+  /* ---------- local persistence ---------- */
+  function loadLocal(){
+    try{
+      var raw = localStorage.getItem(LOCAL_KEY);
+      if(raw){ var p = JSON.parse(raw); if(p && p.v === 1) state = p; }
+    }catch(e){}
+    try{
+      var c = localStorage.getItem(CFG_KEY);
+      if(c) cfg = JSON.parse(c);
+    }catch(e){}
+  }
+  function saveLocal(touch){
+    if(touch !== false) state.updatedAt = nowIso();
+    try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){}
+    var el = $("#lastSaved");
+    if(state.updatedAt){
+      el.textContent = "Atualizado " + new Date(state.updatedAt).toLocaleString("pt-BR",
+        {day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+    }
+  }
+
+  /* ---------- render ---------- */
+  function applyChecks(){
+    $all(".task").forEach(function(t){
+      var id = t.dataset.task;
+      var done = !!state.checks[id];
+      t.classList.toggle("done", done);
+      t.querySelector(".tick").setAttribute("aria-pressed", done ? "true" : "false");
+    });
+    updateProgress();
+  }
+  function updateProgress(){
+    var total = 0, doneTotal = 0;
+    $all(".domain").forEach(function(d){
+      var tasks = $all(".task").filter(function(t){ return d.contains(t); });
+      var done = tasks.filter(function(t){ return t.classList.contains("done"); }).length;
+      total += tasks.length; doneTotal += done;
+      d.querySelector(".d-count").textContent = done + "/" + tasks.length;
+      var bar = d.querySelector(".d-progress .bar");
+      bar.querySelector("i").style.width = (tasks.length ? 100*done/tasks.length : 0) + "%";
+      bar.classList.toggle("done", done === tasks.length && tasks.length > 0);
+    });
+    $("#doneCount").textContent = doneTotal;
+    $("#overallBar").style.width = (total ? 100*doneTotal/total : 0) + "%";
+    $("#overallBarWrap").classList.toggle("done", doneTotal === total && total > 0);
+  }
+  function assignEids(){
+    $all(".editable").forEach(function(el,i){ el.dataset.eid = "e" + i; });
+  }
+  function applyEdits(){
+    $all(".editable").forEach(function(el){
+      var saved = state.edits[el.dataset.eid];
+      if(typeof saved === "string" && saved !== el.innerHTML) el.innerHTML = saved;
+    });
+  }
+  function applyState(){ applyChecks(); applyEdits(); }
+
+  /* ---------- change handling ---------- */
+  function touched(){
+    saveLocal(true);
+    schedulePush();
+  }
+  function schedulePush(){
+    if(!cfg) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(function(){ push().then(function(){
+      setSync("ok","sincronizado " + timeLabel());
+    }).catch(function(){ setSync("err","erro ao enviar"); }); }, 900);
+  }
+  function timeLabel(){
+    return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  /* ---------- supabase ---------- */
+  function sbFetch(path, opts){
+    opts = opts || {};
+    var headers = {
+      "apikey": cfg.key,
+      "Authorization": "Bearer " + cfg.key,
+      "Content-Type": "application/json"
+    };
+    if(opts.headers) for(var k in opts.headers) headers[k] = opts.headers[k];
+    return fetch(cfg.url.replace(/\/+$/,"") + path, {
+      method: opts.method || "GET",
+      headers: headers,
+      body: opts.body
+    }).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r;
+    });
+  }
+  function pull(){
+    return sbFetch("/rest/v1/" + TABLE + "?id=eq." + encodeURIComponent(cfg.doc) + "&select=data,updated_at")
+      .then(function(r){ return r.json(); })
+      .then(function(rows){ return rows[0] || null; });
+  }
+  function push(){
+    return sbFetch("/rest/v1/" + TABLE, {
+      method: "POST",
+      headers: { "Prefer": "resolution=merge-duplicates" },
+      body: JSON.stringify([{ id: cfg.doc, data: state, updated_at: nowIso() }])
+    });
+  }
+  function syncNow(){
+    if(!cfg){ setSync("","só neste navegador"); return Promise.resolve(); }
+    setSync("busy","sincronizando…");
+    return pull().then(function(remote){
+      var remoteNewer = remote && remote.data && remote.data.updatedAt &&
+        (!state.updatedAt || remote.data.updatedAt > state.updatedAt);
+      if(remoteNewer){
+        state = remote.data;
+        saveLocal(false);
+        applyState();
+        setSync("ok","sincronizado " + timeLabel());
+      } else {
+        return push().then(function(){ setSync("ok","sincronizado " + timeLabel()); });
+      }
+    }).catch(function(){
+      setSync("err","sem conexão com o Supabase");
+    });
+  }
+
+  /* ---------- ticks ---------- */
+  document.addEventListener("click", function(ev){
+    var tick = ev.target.closest(".tick");
+    if(!tick) return;
+    var task = tick.closest(".task");
+    var id = task.dataset.task;
+    state.checks[id] = !state.checks[id];
+    if(!state.checks[id]) delete state.checks[id];
+    applyChecks();
+    touched();
+  });
+
+  /* ---------- edit mode ---------- */
+  var editing = false;
+  $("#btnEdit").addEventListener("click", function(){
+    editing = !editing;
+    document.body.classList.toggle("editing", editing);
+    this.classList.toggle("active", editing);
+    this.textContent = editing ? "Concluir edição" : "Modo edição";
+    $all(".editable").forEach(function(el){
+      el.contentEditable = editing ? "true" : "false";
+    });
+  });
+  document.addEventListener("input", function(ev){
+    if(!editing) return;
+    var el = ev.target.closest(".editable");
+    if(!el) return;
+    state.edits[el.dataset.eid] = el.innerHTML;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(touched, 600);
+  });
+
+  /* ---------- export / import ---------- */
+  $("#btnExport").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "ccarf-progresso.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  $("#btnImport").addEventListener("click", function(){ $("#fileImport").click(); });
+  $("#fileImport").addEventListener("change", function(){
+    var f = this.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var p = JSON.parse(reader.result);
+        if(p && p.v === 1){
+          state = p;
+          saveLocal(false);
+          applyState();
+          schedulePush();
+          setSync(cfg ? "busy" : "", cfg ? "enviando importado…" : "importado (só neste navegador)");
+          if(cfg) push().then(function(){ setSync("ok","sincronizado " + timeLabel()); })
+                        .catch(function(){ setSync("err","erro ao enviar"); });
+        } else alert("Arquivo não reconhecido: esperado o JSON exportado por esta página.");
+      }catch(e){ alert("Não consegui ler o JSON: " + e.message); }
+    };
+    reader.readAsText(f);
+    this.value = "";
+  });
+
+  /* ---------- sync panel ---------- */
+  function openPanel(){
+    if(cfg){ $("#sbUrl").value = cfg.url; $("#sbKey").value = cfg.key; $("#sbDoc").value = cfg.doc; }
+    $("#panelBackdrop").hidden = false;
+    $("#syncPanel").hidden = false;
+    $("#sbUrl").focus();
+  }
+  function closePanel(){
+    $("#panelBackdrop").hidden = true;
+    $("#syncPanel").hidden = true;
+  }
+  $("#btnSync").addEventListener("click", openPanel);
+  $("#btnClosePanel").addEventListener("click", closePanel);
+  $("#panelBackdrop").addEventListener("click", closePanel);
+  document.addEventListener("keydown", function(ev){
+    if(ev.key === "Escape" && !$("#syncPanel").hidden) closePanel();
+  });
+  $("#btnConnect").addEventListener("click", function(){
+    var url = $("#sbUrl").value.trim();
+    var key = $("#sbKey").value.trim();
+    var doc = $("#sbDoc").value.trim() || "ccarf-study";
+    if(!/^https:\/\/.+/.test(url) || !key){
+      alert("Preencha a URL do projeto (https://...) e a anon key.");
+      return;
+    }
+    cfg = { url: url, key: key, doc: doc };
+    try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
+    closePanel();
+    syncNow();
+  });
+  $("#btnDisconnect").addEventListener("click", function(){
+    cfg = null;
+    try{ localStorage.removeItem(CFG_KEY); }catch(e){}
+    setSync("","só neste navegador");
+    closePanel();
+  });
+  $("#btnCopySql").addEventListener("click", function(){
+    var btn = this;
+    navigator.clipboard.writeText(SQL).then(function(){
+      btn.textContent = "SQL copiado";
+      setTimeout(function(){ btn.textContent = "Copiar SQL da tabela"; }, 1800);
+    });
+  });
+
+  /* ---------- refresh on focus (troca de máquina / abas) ---------- */
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && cfg) syncNow();
+  });
+
+  /* ---------- init ---------- */
+  loadLocal();
+  assignEids();
+  applyState();
+  saveLocal(false);
+  if(cfg) syncNow(); else setSync("","só neste navegador");
+})();
+</script>
+</body>
+</html>
