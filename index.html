@@ -52,7 +52,8 @@
     padding:5px 10px;cursor:pointer;transition:color .15s,border-color .15s,background .15s;
   }
   .toolbar button:hover{color:var(--ink);border-color:var(--ink-faint)}
-  .toolbar button:focus-visible,.tick:focus-visible,.subtick:focus-visible,.panel button:focus-visible,summary:focus-visible{
+  .toolbar button:focus-visible,.tick:focus-visible,.subtick:focus-visible,.panel button:focus-visible,summary:focus-visible,
+  .link-card:focus-visible,.link-add:focus-visible,.link-del:focus-visible,.link-form button:focus-visible{
     outline:2px solid var(--accent);outline-offset:2px;
   }
   .toolbar button.active{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
@@ -151,6 +152,58 @@
   .ks li.done .subtick svg{opacity:1;transform:scale(1)}
   .ks li.done > .editable{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:rgba(110,108,102,.6);text-decoration-thickness:1px}
   .sub-count{font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink-faint);letter-spacing:.05em}
+
+  /* ---------- links úteis ---------- */
+  .links{margin-top:44px}
+  .link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding-top:14px}
+  .link-card{
+    position:relative;display:flex;align-items:center;gap:11px;min-width:0;
+    border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+    text-decoration:none;color:var(--ink);
+    transition:background .15s,border-color .15s;
+  }
+  .link-card:hover{background:rgba(255,255,255,.03);border-color:var(--ink-faint)}
+  .link-ico{flex:none;width:22px;height:22px;border-radius:5px;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.05)}
+  .link-ico img{width:16px;height:16px}
+  .link-ico span{font-size:11px;color:var(--ink-dim);text-transform:uppercase}
+  .link-body{min-width:0;flex:1}
+  .link-title{font-size:14.5px;line-height:1.3;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .link-host{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .link-del{
+    position:absolute;top:6px;right:6px;width:18px;height:18px;padding:0;
+    border:none;background:var(--bg-panel);color:var(--ink-faint);border-radius:4px;
+    font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;
+    opacity:0;transition:opacity .15s,color .15s;
+  }
+  .link-card:hover .link-del{opacity:1}
+  body.editing .link-del{opacity:1}
+  .link-del:hover{color:var(--err)}
+  .link-add{
+    display:flex;align-items:center;justify-content:center;gap:8px;min-height:60px;
+    border:1px dashed var(--line);border-radius:8px;padding:12px 14px;
+    background:none;cursor:pointer;color:var(--ink-faint);font-family:var(--serif);
+    font-size:12px;letter-spacing:.07em;text-transform:uppercase;
+    transition:color .15s,border-color .15s;
+  }
+  .link-add:hover{color:var(--ink-dim);border-color:var(--ink-faint)}
+  .link-form{
+    grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    border:1px dashed var(--ink-faint);border-radius:8px;padding:12px 14px;
+  }
+  .link-form input{
+    flex:1;min-width:160px;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+    color:var(--ink);font-family:var(--serif);font-size:14px;padding:8px 10px;
+  }
+  .link-form input.url{font-family:var(--mono);font-size:12.5px}
+  .link-form input:focus{outline:none;border-color:var(--ink-dim)}
+  .link-form button{
+    font-family:var(--serif);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+    background:none;border:1px solid var(--line);border-radius:6px;color:var(--ink-dim);
+    padding:8px 14px;cursor:pointer;transition:color .15s,border-color .15s;
+  }
+  .link-form button:hover{color:var(--ink);border-color:var(--ink-faint)}
+  body.editing .link-title{outline:1px dashed rgba(201,120,79,.45);outline-offset:2px;border-radius:2px;cursor:text}
+
   code{
     font-family:var(--mono);font-size:.82em;color:var(--ink);
     background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05);
@@ -238,6 +291,17 @@
       <div class="bar" id="overallBarWrap"><i id="overallBar"></i></div>
     </div>
   </header>
+
+  <!-- ==================== LINKS ÚTEIS ==================== -->
+  <section class="links">
+    <header class="domain-head">
+      <div>
+        <p class="d-eyebrow">Referências · sincroniza junto com o progresso</p>
+        <h2>Links úteis</h2>
+      </div>
+    </header>
+    <div class="link-grid" id="linkGrid"></div>
+  </section>
 
   <!-- ==================== DOMÍNIO 1 ==================== -->
   <section class="domain" data-domain="d1">
@@ -1094,6 +1158,15 @@
   var state = { v:1, updatedAt:null, checks:{}, subs:{}, edits:{} };
 
   var TICK_SVG = '<svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var DEFAULT_LINKS = [
+    { t: "Claude Docs", u: "https://docs.claude.com" },
+    { t: "Claude Code", u: "https://docs.claude.com/en/docs/claude-code/overview" },
+    { t: "Agent SDK", u: "https://docs.claude.com/en/api/agent-sdk/overview" },
+    { t: "Model Context Protocol", u: "https://modelcontextprotocol.io" },
+    { t: "Anthropic Academy", u: "https://anthropic.skilljar.com" },
+    { t: "Simulado 1 (Tools & MCP)", u: "https://claude.ai/code/artifact/c213b1ba-2c67-4afd-bbaa-b6c8aa90f57c" }
+  ];
   var cfg = null;
   var pushTimer = null;
   var saveTimer = null;
@@ -1135,6 +1208,7 @@
     state.checks = state.checks || {};
     state.subs = state.subs || {};
     state.edits = state.edits || {};
+    if(!Array.isArray(state.links)) state.links = JSON.parse(JSON.stringify(DEFAULT_LINKS));
   }
   function buildSubticks(){
     $all(".task").forEach(function(task){
@@ -1219,7 +1293,98 @@
       if(typeof saved === "string" && saved !== el.innerHTML) el.innerHTML = saved;
     });
   }
-  function applyState(){ applyChecks(); applyEdits(); }
+  function applyState(){ applyChecks(); applyEdits(); renderLinks(); }
+
+  /* ---------- links úteis ---------- */
+  function hostOf(u){
+    try{ return new URL(u).host.replace(/^www\./,""); }catch(e){ return u; }
+  }
+  function renderLinks(){
+    var grid = $("#linkGrid");
+    grid.innerHTML = "";
+    state.links.forEach(function(l, i){
+      var a = document.createElement("a");
+      a.className = "link-card";
+      a.href = l.u;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.dataset.idx = i;
+
+      var ico = document.createElement("span");
+      ico.className = "link-ico";
+      var img = document.createElement("img");
+      img.alt = "";
+      img.src = "https://www.google.com/s2/favicons?sz=64&domain=" + encodeURIComponent(hostOf(l.u));
+      var mono = document.createElement("span");
+      mono.textContent = (l.t || hostOf(l.u)).charAt(0);
+      mono.hidden = true;
+      img.onerror = function(){ img.remove(); mono.hidden = false; };
+      ico.appendChild(img);
+      ico.appendChild(mono);
+
+      var body = document.createElement("span");
+      body.className = "link-body";
+      var t = document.createElement("span");
+      t.className = "link-title";
+      t.textContent = l.t || hostOf(l.u);
+      var h = document.createElement("span");
+      h.className = "link-host";
+      h.textContent = hostOf(l.u);
+      body.appendChild(t);
+      body.appendChild(h);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "link-del";
+      del.setAttribute("aria-label", "Remover link " + (l.t || hostOf(l.u)));
+      del.textContent = "×";
+
+      a.appendChild(ico);
+      a.appendChild(body);
+      a.appendChild(del);
+      grid.appendChild(a);
+    });
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "link-add";
+    add.id = "linkAdd";
+    add.textContent = "+ Adicionar link";
+    grid.appendChild(add);
+    syncLinkEditable();
+  }
+  function syncLinkEditable(){
+    $all(".link-title").forEach(function(el){ el.contentEditable = editing ? "true" : "false"; });
+  }
+  function showLinkForm(){
+    if($("#linkForm")) return;
+    var f = document.createElement("div");
+    f.className = "link-form";
+    f.id = "linkForm";
+    var ti = document.createElement("input");
+    ti.type = "text"; ti.placeholder = "Título"; ti.setAttribute("aria-label","Título do link");
+    var ui = document.createElement("input");
+    ui.type = "text"; ui.placeholder = "https://..."; ui.className = "url"; ui.setAttribute("aria-label","URL do link");
+    var ok = document.createElement("button"); ok.type = "button"; ok.textContent = "Salvar";
+    var no = document.createElement("button"); no.type = "button"; no.textContent = "Cancelar";
+    function submit(){
+      var url = ui.value.trim();
+      if(!url){ ui.focus(); return; }
+      if(!/^[a-z]+:\/\//i.test(url)) url = "https://" + url;
+      state.links.push({ t: ti.value.trim() || hostOf(url), u: url });
+      renderLinks();
+      touched();
+    }
+    ok.addEventListener("click", submit);
+    no.addEventListener("click", renderLinks);
+    f.addEventListener("keydown", function(ev){
+      if(ev.key === "Enter"){ ev.preventDefault(); submit(); }
+      if(ev.key === "Escape") renderLinks();
+    });
+    f.appendChild(ti); f.appendChild(ui); f.appendChild(ok); f.appendChild(no);
+    var grid = $("#linkGrid");
+    grid.replaceChild(f, $("#linkAdd"));
+    ti.focus();
+  }
 
   /* ---------- change handling ---------- */
   function touched(){
@@ -1286,6 +1451,28 @@
     });
   }
 
+  /* ---------- eventos dos links ---------- */
+  $("#linkGrid").addEventListener("click", function(ev){
+    var del = ev.target.closest(".link-del");
+    if(del){
+      ev.preventDefault();
+      ev.stopPropagation();
+      state.links.splice(+del.closest(".link-card").dataset.idx, 1);
+      renderLinks();
+      touched();
+      return;
+    }
+    if(ev.target.closest("#linkAdd")){ showLinkForm(); return; }
+    if(editing && ev.target.closest(".link-card")) ev.preventDefault();
+  });
+  $("#linkGrid").addEventListener("input", function(ev){
+    var t = ev.target.closest(".link-title");
+    if(!t) return;
+    state.links[+t.closest(".link-card").dataset.idx].t = t.textContent;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(touched, 600);
+  });
+
   /* ---------- ticks ---------- */
   document.addEventListener("click", function(ev){
     var sub = ev.target.closest(".subtick");
@@ -1322,6 +1509,7 @@
     $all(".editable").forEach(function(el){
       el.contentEditable = editing ? "true" : "false";
     });
+    syncLinkEditable();
   });
   document.addEventListener("input", function(ev){
     if(!editing) return;
