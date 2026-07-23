@@ -6,13 +6,13 @@
 <title>CCAR-F · Checklist de Estudo</title>
 <style>
   :root{
-    --bg:#191613;
-    --bg-raise:#201c18;
-    --bg-panel:#241f1a;
-    --ink:#e6dfd0;
-    --ink-dim:#a89d8a;
-    --ink-faint:#6f6657;
-    --line:#2e2822;
+    --bg:#1a1b1d;
+    --bg-raise:#212226;
+    --bg-panel:#232428;
+    --ink:#e3e1da;
+    --ink-dim:#a6a39b;
+    --ink-faint:#6e6c66;
+    --line:#2c2d31;
     --accent:#c9784f;
     --accent-soft:rgba(201,120,79,.13);
     --done:#8faf8b;
@@ -43,7 +43,7 @@
   .toolbar{
     position:fixed;top:16px;right:16px;z-index:10;
     display:flex;align-items:center;gap:8px;
-    background:rgba(25,22,19,.85);backdrop-filter:blur(8px);
+    background:rgba(26,27,29,.85);backdrop-filter:blur(8px);
     border:1px solid var(--line);border-radius:8px;padding:8px 10px;
   }
   .toolbar button{
@@ -52,7 +52,7 @@
     padding:5px 10px;cursor:pointer;transition:color .15s,border-color .15s,background .15s;
   }
   .toolbar button:hover{color:var(--ink);border-color:var(--ink-faint)}
-  .toolbar button:focus-visible,.tick:focus-visible,.panel button:focus-visible,summary:focus-visible{
+  .toolbar button:focus-visible,.tick:focus-visible,.subtick:focus-visible,.panel button:focus-visible,summary:focus-visible{
     outline:2px solid var(--accent);outline-offset:2px;
   }
   .toolbar button.active{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
@@ -94,14 +94,19 @@
   .bar.sm{width:72px;flex:none}
 
   /* ---------- tasks ---------- */
-  .task{border-bottom:1px solid rgba(46,40,34,.55)}
+  .task{border-bottom:1px solid rgba(44,45,49,.55)}
   .task:last-child{border-bottom:none}
   .task-row{display:flex;gap:14px;padding:14px 10px 14px 6px;margin:0 -10px 0 -6px;border-radius:6px;transition:background .15s}
   .task-row:hover{background:rgba(255,255,255,.025)}
   .tick{
-    flex:none;width:19px;height:19px;margin-top:5px;
+    flex:none;width:19px;height:19px;margin-top:5px;position:relative;
     border:1.5px solid var(--ink-faint);border-radius:4px;background:none;cursor:pointer;
     display:grid;place-items:center;transition:border-color .15s,background .15s;padding:0;
+  }
+  .task.partial .tick{border-color:var(--accent)}
+  .task.partial .tick::before{
+    content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:9px;height:2px;background:var(--accent);border-radius:1px;
   }
   .tick:hover{border-color:var(--ink-dim)}
   .tick svg{width:12px;height:12px;opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s}
@@ -133,9 +138,19 @@
     color:var(--accent);margin:14px 0 6px;
   }
   .ks h4:first-child{margin-top:4px}
-  .ks ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
-  .ks li{font-size:15.5px;line-height:1.55;color:var(--ink-dim)}
-  .ks li::marker{color:var(--ink-faint)}
+  .ks ul{margin:0;padding-left:2px;list-style:none;display:flex;flex-direction:column;gap:7px}
+  .ks li{font-size:15.5px;line-height:1.55;color:var(--ink-dim);display:flex;gap:10px;align-items:flex-start}
+  .subtick{
+    flex:none;width:15px;height:15px;margin-top:4px;padding:0;
+    border:1.5px solid var(--ink-faint);border-radius:4px;background:none;cursor:pointer;
+    display:grid;place-items:center;transition:border-color .15s,background .15s;
+  }
+  .subtick:hover{border-color:var(--ink-dim)}
+  .subtick svg{width:9px;height:9px;opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s}
+  .ks li.done .subtick{background:var(--done);border-color:var(--done)}
+  .ks li.done .subtick svg{opacity:1;transform:scale(1)}
+  .ks li.done > .editable{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:rgba(110,108,102,.6);text-decoration-thickness:1px}
+  .sub-count{font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink-faint);letter-spacing:.05em}
   code{
     font-family:var(--mono);font-size:.82em;color:var(--ink);
     background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05);
@@ -217,7 +232,7 @@
   <header class="hero">
     <p class="eyebrow">Claude Certification Program · CCAR-F · Guia v1.0 · Julho 2026</p>
     <h1>Objetivos detalhados por domínio</h1>
-    <p class="lede">Checklist de estudo montado a partir do Tópico 6 do Exam Guide oficial. Cada item é um task statement que a prova mede. Marque conforme dominar o conteúdo e expanda cada tópico para ver o detalhamento de <em>Knowledge</em> e <em>Skills</em>.</p>
+    <p class="lede">Checklist de estudo montado a partir do Tópico 6 do Exam Guide oficial. Cada item é um task statement que a prova mede. Expanda cada tópico e marque os itens de <em>Knowledge</em> e <em>Skills</em> conforme dominar: o tópico fecha sozinho quando todos os itens estiverem marcados.</p>
     <div class="overall">
       <span class="overall-num"><b id="doneCount">0</b> / 30 tópicos</span>
       <div class="bar" id="overallBarWrap"><i id="overallBar"></i></div>
@@ -1076,7 +1091,9 @@
     "create policy \"anon update\" on public.study_checklist for update to anon using (true) with check (true);"
   ].join("\n");
 
-  var state = { v:1, updatedAt:null, checks:{}, edits:{} };
+  var state = { v:1, updatedAt:null, checks:{}, subs:{}, edits:{} };
+
+  var TICK_SVG = '<svg viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#1c231b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var cfg = null;
   var pushTimer = null;
   var saveTimer = null;
@@ -1114,12 +1131,67 @@
   }
 
   /* ---------- render ---------- */
+  function normalize(){
+    state.checks = state.checks || {};
+    state.subs = state.subs || {};
+    state.edits = state.edits || {};
+  }
+  function buildSubticks(){
+    $all(".task").forEach(function(task){
+      var id = task.dataset.task;
+      var lis = task.querySelectorAll(".ks li");
+      Array.prototype.forEach.call(lis, function(li, i){
+        li.dataset.sub = id + ":" + i;
+        var span = document.createElement("span");
+        span.className = "editable";
+        while(li.firstChild) span.appendChild(li.firstChild);
+        li.classList.remove("editable");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subtick";
+        btn.setAttribute("aria-label", "Marcar item de " + id);
+        btn.innerHTML = TICK_SVG;
+        li.appendChild(btn);
+        li.appendChild(span);
+      });
+      var counter = document.createElement("span");
+      counter.className = "sub-count";
+      task.querySelector("summary").appendChild(counter);
+    });
+  }
+  /* estado antigo (só check por tópico) vira todos os subitens marcados */
+  function migrateTaskChecks(){
+    $all(".task").forEach(function(task){
+      var id = task.dataset.task;
+      if(!state.checks[id]) return;
+      var lis = task.querySelectorAll(".ks li");
+      var any = false;
+      Array.prototype.forEach.call(lis, function(li){ if(state.subs[li.dataset.sub]) any = true; });
+      if(!any) Array.prototype.forEach.call(lis, function(li){ state.subs[li.dataset.sub] = true; });
+    });
+  }
+  function adoptState(p){
+    state = p;
+    normalize();
+    migrateTaskChecks();
+  }
   function applyChecks(){
     $all(".task").forEach(function(t){
       var id = t.dataset.task;
-      var done = !!state.checks[id];
-      t.classList.toggle("done", done);
-      t.querySelector(".tick").setAttribute("aria-pressed", done ? "true" : "false");
+      var lis = t.querySelectorAll(".ks li");
+      var total = lis.length, done = 0;
+      Array.prototype.forEach.call(lis, function(li){
+        var on = !!state.subs[li.dataset.sub];
+        li.classList.toggle("done", on);
+        li.querySelector(".subtick").setAttribute("aria-pressed", on ? "true" : "false");
+        if(on) done++;
+      });
+      var full = total > 0 && done === total;
+      if(full) state.checks[id] = true; else delete state.checks[id];
+      t.classList.toggle("done", full);
+      t.classList.toggle("partial", !full && done > 0);
+      t.querySelector(".tick").setAttribute("aria-pressed", full ? "true" : "false");
+      t.querySelector(".sub-count").textContent = done + "/" + total;
     });
     updateProgress();
   }
@@ -1202,7 +1274,7 @@
       var remoteNewer = remote && remote.data && remote.data.updatedAt &&
         (!state.updatedAt || remote.data.updatedAt > state.updatedAt);
       if(remoteNewer){
-        state = remote.data;
+        adoptState(remote.data);
         saveLocal(false);
         applyState();
         setSync("ok","sincronizado " + timeLabel());
@@ -1216,12 +1288,26 @@
 
   /* ---------- ticks ---------- */
   document.addEventListener("click", function(ev){
+    var sub = ev.target.closest(".subtick");
+    if(sub){
+      var li = sub.closest("li");
+      if(state.subs[li.dataset.sub]) delete state.subs[li.dataset.sub];
+      else state.subs[li.dataset.sub] = true;
+      applyChecks();
+      touched();
+      return;
+    }
     var tick = ev.target.closest(".tick");
     if(!tick) return;
+    /* clique no tópico marca ou desmarca todos os subitens */
     var task = tick.closest(".task");
-    var id = task.dataset.task;
-    state.checks[id] = !state.checks[id];
-    if(!state.checks[id]) delete state.checks[id];
+    var lis = task.querySelectorAll(".ks li");
+    var allDone = true;
+    Array.prototype.forEach.call(lis, function(li){ if(!state.subs[li.dataset.sub]) allDone = false; });
+    Array.prototype.forEach.call(lis, function(li){
+      if(allDone) delete state.subs[li.dataset.sub];
+      else state.subs[li.dataset.sub] = true;
+    });
     applyChecks();
     touched();
   });
@@ -1264,7 +1350,7 @@
       try{
         var p = JSON.parse(reader.result);
         if(p && p.v === 1){
-          state = p;
+          adoptState(p);
           saveLocal(false);
           applyState();
           schedulePush();
@@ -1329,7 +1415,10 @@
 
   /* ---------- init ---------- */
   loadLocal();
+  normalize();
+  buildSubticks();
   assignEids();
+  migrateTaskChecks();
   applyState();
   saveLocal(false);
   if(cfg) syncNow(); else setSync("","só neste navegador");
